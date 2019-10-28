@@ -19,7 +19,7 @@ def pytest_configure(config):
     warnings.filterwarnings("error", "", Warning, r"^(?!(|kombu|raven|sentry))")
 
     # if we are running any tests for plugins, we need to make sure we install them first
-    if any("tests/sentry_plugins" in s for s in config.getoption("file_or_dir")):
+    if any("tests/sentry-plugins" in s for s in config.getoption("file_or_dir")):
         install_sentry_plugins()
 
 
