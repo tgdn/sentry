@@ -299,4 +299,5 @@ def send_webhooks(installation, event, **kwargs):
             org_id=installation.organization_id,
             event=event,
             url=servicehook.sentry_app.webhook_url,
+            error=resp.headers.get("Sentry-Hook-Error"),
         )
