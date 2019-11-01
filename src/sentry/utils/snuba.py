@@ -23,6 +23,7 @@ from sentry.models import (
     GroupRelease,
     Organization,
     Project,
+    ProjectKey,
     Release,
     ReleaseProject,
 )
@@ -63,6 +64,7 @@ class Dataset(Enum):
     Events = "events"
     Transactions = "transactions"
     Outcomes = "outcomes"
+    OutcomesRaw = "outcomes_raw"
 
 
 DATASETS = {Dataset.Events: SENTRY_SNUBA_MAP, Dataset.Transactions: TRANSACTIONS_SENTRY_SNUBA_MAP}
@@ -581,6 +583,10 @@ def get_query_params_to_update_for_organizations(query_params):
         organization_id = organization_ids[0]
     elif "project_id" in query_params.filter_keys:
         organization_id, _ = get_query_params_to_update_for_projects(query_params)
+    elif "key_id" in query_params.filter_keys:
+        key_ids = list(set(query_params.filter_keys["key_id"]))
+        project_key = ProjectKey.objects.get(pk=key_ids[0])
+        organization_id = project_key.project.organization_id
     else:
         organization_id = None
 
@@ -605,7 +611,7 @@ def _prepare_query_params(query_params):
 
     if query_params.dataset in [Dataset.Events, Dataset.Transactions]:
         (organization_id, params_to_update) = get_query_params_to_update_for_projects(query_params)
-    elif query_params.dataset == Dataset.Outcomes:
+    elif query_params.dataset in [Dataset.Outcomes, Dataset.OutcomesRaw]:
         (organization_id, params_to_update) = get_query_params_to_update_for_organizations(
             query_params
         )
