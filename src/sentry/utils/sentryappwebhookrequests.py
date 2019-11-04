@@ -12,6 +12,7 @@ from sentry.models.sentryapp import VALID_EVENTS
 
 
 BUFFER_SIZE = 100
+KEY_EXPIRY = 60 * 60 * 24 * 30  # 30 days
 
 
 class SentryAppWebhookRequestsBuffer(object):
@@ -23,11 +24,16 @@ class SentryAppWebhookRequestsBuffer(object):
     def __init__(self, sentry_app):
         self.sentry_app = sentry_app
 
-        cluster_id = getattr(settings, "SENTRY_WEBHOOK_LOG_REDIS_CLUSTER", None)
-        if cluster_id is None:
-            self.client = redis.clusters.get("default").get_local_client(0)
+        cluster_id = getattr(settings, "SENTRY_WEBHOOK_LOG_REDIS_CLUSTER", "default")
+        self.client = redis.redis_clusters.get(cluster_id)
+
+    def _get_redis_key(self, event, error=False):
+        sentry_app_id = self.sentry_app.id
+
+        if error:
+            return "sentry-app-webhook-error:{{{0}}}:{1}".format(sentry_app_id, event)
         else:
-            self.client = redis.redis_clusters.get(cluster_id)
+            return "sentry-app-webhook-request:{{{0}}}:{1}".format(sentry_app_id, event)
 
     def _convert_redis_request(self, redis_request, event):
         """
@@ -47,38 +53,7 @@ class SentryAppWebhookRequestsBuffer(object):
 
         pipeline.lpush(buffer_key, json.dumps(item))
         pipeline.ltrim(buffer_key, 0, BUFFER_SIZE - 1)
-
-    def add_request(self, response_code, org_id, event, url, error=None):
-        if event not in VALID_EVENTS:
-            return
-
-        request_key = self._get_redis_key(event)
-
-        time = timezone.now()
-        request_data = {
-            "date": six.binary_type(time),
-            "response_code": response_code,
-            "webhook_url": url,
-        }
-
-        # Don't store the org id for internal apps because it will always be the org that owns the app anyway
-        if not self.sentry_app.is_internal:
-            request_data["organization_id"] = org_id
-
-        # If there's a sentry error associated with this request!
-        if error is not None:
-            request_data["error_id"] = error
-
-        pipe = self.client.pipeline()
-
-        self._add_to_buffer_pipeline(request_key, request_data, pipe)
-
-        # If it's an error add it to the error buffer
-        if 400 <= response_code <= 599:
-            error_key = self._get_redis_key(event, error=True)
-            self._add_to_buffer_pipeline(error_key, request_data, pipe)
-
-        pipe.execute()
+        pipeline.expire(buffer_key, KEY_EXPIRY)
 
     def _get_all_from_buffer(self, buffer_key, pipeline=None):
         """
@@ -108,7 +83,7 @@ class SentryAppWebhookRequestsBuffer(object):
                 ]
                 all_requests.extend(event_requests)
 
-            all_requests.sort(key=lambda x: parse_date(x.get("date")), reverse=True)
+            all_requests.sort(key=lambda x: parse_date(x["date"]), reverse=True)
             return all_requests[0:BUFFER_SIZE]
 
         else:
@@ -123,10 +98,30 @@ class SentryAppWebhookRequestsBuffer(object):
     def get_requests(self, event=None):
         return self._get_requests(event=event, error=False)
 
-    def _get_redis_key(self, event, error=False):
-        sentry_app_id = self.sentry_app.id
+    def add_request(self, response_code, org_id, event, url):
+        if event not in VALID_EVENTS:
+            return
 
-        if error:
-            return "sentry-app-webhook-error:{}:{}".format(sentry_app_id, event)
-        else:
-            return "sentry-app-webhook-request:{}:{}".format(sentry_app_id, event)
+        request_key = self._get_redis_key(event)
+
+        time = timezone.now()
+        request_data = {
+            "date": six.text_type(time),
+            "response_code": response_code,
+            "webhook_url": url,
+        }
+
+        # Don't store the org id for internal apps because it will always be the org that owns the app anyway
+        if not self.sentry_app.is_internal:
+            request_data["organization_id"] = org_id
+
+        pipe = self.client.pipeline()
+
+        self._add_to_buffer_pipeline(request_key, request_data, pipe)
+
+        # If it's an error add it to the error buffer
+        if 400 <= response_code <= 599:
+            error_key = self._get_redis_key(event, error=True)
+            self._add_to_buffer_pipeline(error_key, request_data, pipe)
+
+        pipe.execute()
