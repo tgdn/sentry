@@ -72,6 +72,7 @@ class EventsV2 extends React.Component<Props> {
           key={index}
           to={to}
           title={eventView.name}
+          queryDetail={eventView.query}
           onEventClick={() => {
             trackAnalyticsEvent({
               eventKey: 'discover_v2.prebuilt_query_click',
@@ -217,11 +218,11 @@ const QueryGrid = styled('div')`
   grid-gap: ${space(3)};
 
   @media (min-width: ${theme.breakpoints[1]}) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   @media (min-width: ${theme.breakpoints[2]}) {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
 `;
 
