@@ -18,7 +18,7 @@ import Banner from 'app/components/banner';
 import Button from 'app/components/button';
 import BetaTag from 'app/components/betaTag';
 import Feature from 'app/components/acl/feature';
-import Link from 'app/components/links/link';
+import SearchBar from 'app/views/events/searchBar';
 import NoProjectMessage from 'app/components/noProjectMessage';
 import theme from 'app/utils/theme';
 import space from 'app/styles/space';
@@ -27,6 +27,7 @@ import withOrganization from 'app/utils/withOrganization';
 import Events from './events';
 import EventDetails from './eventDetails';
 import SavedQueryButtonGroup from './savedQueryButtonGroup';
+import QueryCard from './querycard';
 import {getFirstQueryString} from './utils';
 import {ALL_VIEWS, TRANSACTION_VIEWS} from './data';
 import EventView from './eventView';
@@ -67,25 +68,23 @@ class EventsV2 extends React.Component<Props> {
       };
 
       return (
-        <LinkContainer key={index}>
-          <Link
-            to={to}
-            onClick={() => {
-              trackAnalyticsEvent({
-                eventKey: 'discover_v2.prebuilt_query_click',
-                eventName: 'Discoverv2: Click a pre-built query',
-                organization_id: this.props.organization.id,
-                query_name: eventView.name,
-              });
-            }}
-          >
-            {eventView.name}
-          </Link>
-        </LinkContainer>
+        <QueryCard
+          key={index}
+          to={to}
+          title={eventView.name}
+          onEventClick={() => {
+            trackAnalyticsEvent({
+              eventKey: 'discover_v2.prebuilt_query_click',
+              eventName: 'Discoverv2: Click a pre-built query',
+              organization_id: this.props.organization.id,
+              query_name: eventView.name,
+            });
+          }}
+        />
       );
     });
 
-    return <LinkList>{list}</LinkList>;
+    return <QueryGrid>{list}</QueryGrid>;
   }
 
   getEventViewName = (): Array<string> => {
@@ -112,7 +111,7 @@ class EventsV2 extends React.Component<Props> {
       return null;
     } else {
       return (
-        <Banner
+        <StyledBanner
           title={t('Discover')}
           subtitle={t('Here are a few sample queries to kick things off')}
           onCloseClick={this.handleClick}
@@ -124,9 +123,19 @@ class EventsV2 extends React.Component<Props> {
           <BannerButton icon="icon-circle-add">
             {t('Slowest HTTP endpoints')}
           </BannerButton>
-        </Banner>
+        </StyledBanner>
       );
     }
+  }
+
+  renderNewQuery() {
+    return (
+      <div>
+        {this.renderBanner()}
+        <StyledSearchBar />
+        {this.renderQueryList()}
+      </div>
+    );
   }
 
   render() {
@@ -159,8 +168,7 @@ class EventsV2 extends React.Component<Props> {
                     />
                   )}
                 </PageHeader>
-                {!hasQuery && this.renderBanner()}
-                {!hasQuery && this.renderQueryList()}
+                {!hasQuery && this.renderNewQuery()}
                 {hasQuery && (
                   <Events
                     organization={organization}
@@ -195,19 +203,26 @@ const BannerButton = styled(Button)`
   }
 `;
 
-const LinkList = styled('ul')`
-  list-style: none;
-  padding: 0;
-  margin: 0;
+const StyledBanner = styled(Banner)`
+  margin-bottom: ${space(3)};
 `;
 
-const LinkContainer = styled('li')`
-  background: ${p => p.theme.white};
-  line-height: 1.4;
-  border: 1px solid ${p => p.theme.borderLight};
-  border-radius: ${p => p.theme.borderRadius};
-  margin-bottom: ${space(1)};
-  padding: ${space(1)};
+const StyledSearchBar = styled(SearchBar)`
+  margin-bottom: ${space(3)};
+`;
+
+const QueryGrid = styled('div')`
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: ${space(3)};
+
+  @media (min-width: ${theme.breakpoints[1]}) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (min-width: ${theme.breakpoints[2]}) {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 `;
 
 export default withOrganization(EventsV2);
