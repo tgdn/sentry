@@ -253,8 +253,8 @@ export type GlobalSelection = {
   environments: string[];
   forceUrlSync?: boolean;
   datetime: {
-    start: string;
-    end: string;
+    start: Date | null;
+    end: Date | null;
     period: string;
     utc: boolean;
   };

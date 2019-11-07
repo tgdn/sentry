@@ -69,13 +69,14 @@ class EventsV2 extends React.Component<Props> {
       };
 
       return (
-        <React.Fragment>
-          <MiniGraph eventView={eventView} />
+        <React.Fragment key={index}>
           <QueryCard
-            key={index}
             to={to}
             title={eventView.name}
             queryDetail={eventView.query}
+            renderGraph={() => {
+              return <MiniGraph eventView={eventView} organization={organization} />;
+            }}
             onEventClick={() => {
               trackAnalyticsEvent({
                 eventKey: 'discover_v2.prebuilt_query_click',

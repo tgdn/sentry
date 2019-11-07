@@ -11,13 +11,14 @@ type Props = {
   queryDetail?: string;
   to?: string | object;
   onEventClick?: () => void;
+  renderGraph: () => React.ReactNode;
 };
 
 class QueryCard extends React.Component<Props> {
   render() {
-    const {title, queryDetail, onEventClick, to} = this.props;
+    const {title, queryDetail, onEventClick, to, renderGraph} = this.props;
     const creatorName = {
-      id: 1,
+      id: String(1),
       name: 'Bob',
     };
 
@@ -27,7 +28,7 @@ class QueryCard extends React.Component<Props> {
           <StyledTitle>{title}</StyledTitle>
           <StyledQueryDetail>{queryDetail}</StyledQueryDetail>
         </QueryCardHeader>
-        <QueryCardBody />
+        <QueryCardBody>{renderGraph()}</QueryCardBody>
         <QueryCardFooter>
           <StyledCreator>
             <StyledAvatar user={creatorName} />
@@ -80,6 +81,8 @@ const StyledQueryDetail = styled('div')`
 const QueryCardBody = styled('div')`
   background: ${p => p.theme.offWhiteLight};
   height: 100px;
+  min-height: 100px;
+  overflow: hidden;
 `;
 
 const QueryCardFooter = styled('div')`

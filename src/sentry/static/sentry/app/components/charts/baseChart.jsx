@@ -222,6 +222,8 @@ class BaseChart extends React.Component {
       ? yAxes.slice(0, 2).map(YAxis)
       : [YAxis(), YAxis()];
 
+    console.log('grid', grid);
+
     return (
       <ReactEchartsCore
         ref={forwardedRef}
