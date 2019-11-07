@@ -31,6 +31,7 @@ import QueryCard from './querycard';
 import {getFirstQueryString} from './utils';
 import {ALL_VIEWS, TRANSACTION_VIEWS} from './data';
 import EventView from './eventView';
+import MiniGraph from './miniGraph';
 
 type Props = {
   organization: Organization;
@@ -68,20 +69,23 @@ class EventsV2 extends React.Component<Props> {
       };
 
       return (
-        <QueryCard
-          key={index}
-          to={to}
-          title={eventView.name}
-          queryDetail={eventView.query}
-          onEventClick={() => {
-            trackAnalyticsEvent({
-              eventKey: 'discover_v2.prebuilt_query_click',
-              eventName: 'Discoverv2: Click a pre-built query',
-              organization_id: this.props.organization.id,
-              query_name: eventView.name,
-            });
-          }}
-        />
+        <React.Fragment>
+          <MiniGraph eventView={eventView} />
+          <QueryCard
+            key={index}
+            to={to}
+            title={eventView.name}
+            queryDetail={eventView.query}
+            onEventClick={() => {
+              trackAnalyticsEvent({
+                eventKey: 'discover_v2.prebuilt_query_click',
+                eventName: 'Discoverv2: Click a pre-built query',
+                organization_id: this.props.organization.id,
+                query_name: eventView.name,
+              });
+            }}
+          />
+        </React.Fragment>
       );
     });
 
