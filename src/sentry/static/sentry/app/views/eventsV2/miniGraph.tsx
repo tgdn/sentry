@@ -6,6 +6,7 @@ import {Client} from 'app/api';
 import {GlobalSelection, Organization} from 'app/types';
 import EventsRequest from 'app/views/events/utils/eventsRequest';
 import AreaChart from 'app/components/charts/areaChart';
+import {getInterval} from 'app/components/charts/utils';
 
 import EventView from './eventView';
 
@@ -28,6 +29,7 @@ class MiniGraph extends React.Component<Props> {
         start={start}
         end={end}
         period={period}
+        interval={getInterval({start, end, period}, true)}
       >
         {({loading, timeseriesData}) => {
           if (loading) {
