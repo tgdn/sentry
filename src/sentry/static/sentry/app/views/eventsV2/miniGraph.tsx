@@ -15,17 +15,19 @@ type Props = {
   eventView: EventView;
   api: Client;
   selection: GlobalSelection;
+  query: string;
 };
 
 class MiniGraph extends React.Component<Props> {
   render() {
-    const {organization, api, selection} = this.props;
+    const {organization, api, selection, query} = this.props;
     const {start, end, period} = selection.datetime;
 
     return (
       <EventsRequest
         organization={organization}
         api={api}
+        query={query}
         start={start}
         end={end}
         period={period}
@@ -45,6 +47,7 @@ class MiniGraph extends React.Component<Props> {
               lineStyle: {
                 opacity: 0,
               },
+              smooth: true,
             };
           });
 

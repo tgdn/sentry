@@ -75,7 +75,13 @@ class EventsV2 extends React.Component<Props> {
             title={eventView.name}
             queryDetail={eventView.query}
             renderGraph={() => {
-              return <MiniGraph eventView={eventView} organization={organization} />;
+              return (
+                <MiniGraph
+                  query={eventView.getEventsAPIPayload(location).query}
+                  eventView={eventView}
+                  organization={organization}
+                />
+              );
             }}
             onEventClick={() => {
               trackAnalyticsEvent({
