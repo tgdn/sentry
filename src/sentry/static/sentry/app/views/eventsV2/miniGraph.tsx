@@ -20,7 +20,6 @@ class MiniGraph extends React.Component<Props> {
   render() {
     const {organization, api, selection} = this.props;
     const {start, end, period} = selection.datetime;
-    console.log('selection.datetime', selection.datetime);
 
     return (
       <EventsRequest
@@ -30,28 +29,40 @@ class MiniGraph extends React.Component<Props> {
         end={end}
         period={period}
       >
-        {({loading, timeseriesData, previousTimeseriesData}) => {
+        {({loading, timeseriesData}) => {
           if (loading) {
             return null;
           }
 
-          console.log('timeseriesData', timeseriesData);
-          console.log('previousTimeseriesData', previousTimeseriesData);
+          const data = (timeseriesData || []).map(series => {
+            return {
+              ...series,
+              areaStyle: {
+                opacity: 0.4,
+              },
+              lineStyle: {
+                opacity: 0,
+              },
+            };
+          });
+
           return (
             <AreaChart
               height={100}
-              series={[...timeseriesData]}
-              seriesOptions={{
-                showSymbol: false,
-                smooth: true,
-              }}
+              series={[...data]}
               xAxis={{
                 show: false,
+                axisPointer: {
+                  show: false,
+                },
               }}
               yAxis={{
                 show: false,
               }}
               tooltip={{
+                show: false,
+              }}
+              toolBox={{
                 show: false,
               }}
               grid={{
@@ -61,6 +72,7 @@ class MiniGraph extends React.Component<Props> {
                 bottom: 0,
                 containLabel: false,
               }}
+              colors={['#6d5fc7']}
               options={{
                 hoverAnimation: false,
               }}
